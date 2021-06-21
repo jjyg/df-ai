@@ -1077,7 +1077,6 @@ class DwarfAI
                 case subtype
                 when :furniture
                     bld.settings.flags.furniture = true
-                    bld.settings.furniture.sand_bags = true
                     s = bld.settings.furniture
                     60.times { |i| s.type[i] = true }   # 33, hardcoded (28 ItemTypes, 4 ToolUses, 1 SandBags)
                 when :finished_goods
@@ -1491,7 +1490,7 @@ class DwarfAI
                 }
                 dyes = may.find_all { |i|
                     p = df.world.raws.plants.all[i]
-                    p.flags[:MILL] and df.decode_mat(p.material_defs.type_mill, p.material_defs.idx_mill).material.flags[:IS_DYE]
+                    p.flags[:MILL] and df.decode_mat(p.material_defs.type[:Mill], p.material_defs.idx[:Mill]).material.flags[:IS_DYE]
                 }
 
                 4.times { |season|

@@ -90,8 +90,8 @@ class DwarfAI
         end
 
         def update_jobs
-            df.world.job_list.each { |j|
-                j.flags.suspend = false if j.flags.suspend and not j.flags.repeat
+            df.world.jobs.postings.each { |jp|
+                jp.job.flags.suspend = false if jp.job and jp.job.flags.suspend and not jp.job.flags.repeat
             }
         end
 
@@ -190,7 +190,7 @@ class DwarfAI
                 squad = DFHack::Squad.cpp_new :id => squad_id
 
                 squad.name.first_name = "AI squad #{squad_id}"
-                squad.name.unknown = -1
+                squad.name.type = :NONE
                 squad.name.has_name = true
 
                 squad.cur_alert_idx = 1     # train
@@ -212,7 +212,7 @@ class DwarfAI
                     pos.uniform[:Weapon][0].indiv_choice.melee = true
                     pos.uniform[:Weapon][0].item_filter.material_class = :None
                     pos.flags.exact_matches = true
-                    pos.unk_118 = pos.unk_11c = -1
+                    #pos.unk_118 = pos.unk_11c = -1
                     squad.positions << pos
                 }
 
@@ -314,7 +314,7 @@ class DwarfAI
                 }
 
                 seen_workshop = {}
-                df.world.job_list.each { |job|
+                df.world.jobs.list.each { |job|
                     ref_bld = job.general_refs.grep(DFHack::GeneralRefBuildingHolderst).first
                     ref_wrk = job.general_refs.grep(DFHack::GeneralRefUnitWorkerst).first
                     next if ref_bld and seen_workshop[ref_bld.building_id]
@@ -331,7 +331,7 @@ class DwarfAI
                                 # TODO
                             when :PullLever
                             when :CustomReaction
-                                reac = df.world.raws.reactions.find { |r| r.code == job.reaction_name }
+                                reac = df.world.raws.reactions.reactions.find { |r| r.code == job.reaction_name }
                                 if reac and job_labor = DFHack::JobSkill::Labor[reac.skill]
                                     @labor_needmore[job_labor] += 1 if job_labor != :NONE
                                 end
@@ -552,7 +552,7 @@ class DwarfAI
 
         def unit_shallnotworknow(u)
             # manager shall not work when unvalidated jobs are pending
-            return true if df.world.manager_orders.last and df.world.manager_orders.last.is_validated == 0 and
+            return true if df.world.manager_orders.last and df.world.manager_orders.last.status.validated == 0 and
                     df.unit_entitypositions(u).find { |n| n.responsibilities[:MANAGE_PRODUCTION] }
             # TODO medical dwarf, broker
         end
@@ -581,7 +581,7 @@ class DwarfAI
                 u.military.squad_id == -1 and !ent.positions.assignments.find { |a| a.histfig == u.hist_figure_id } and !u.status.labors[:MINE]
             }
                 assign_new_noble('BOOKKEEPER', tg)
-                df.ui.bookkeeper_settings = 4
+                df.ui.nobles.bookkeeper_settings = :AllAccurate
             end
 
 
@@ -661,9 +661,8 @@ class DwarfAI
             df.world.units.active.each { |u|
                 next if u.civ_id != df.ui.civ_id
                 next if u.race == df.ui.race_id
-                next if u.flags1.dead or u.flags1.merchant or u.flags1.forest
+                next if u.flags1.inactive or u.flags1.merchant or u.flags1.forest
 
-begin
                 if @pet[u.id]
                     if @pet[u.id].include?(:MILKABLE) and u.profession != :BABY and u.profession != :CHILD
                         if not u.status.misc_traits.find { |mt| mt.id == :MilkCounter }
@@ -727,9 +726,6 @@ begin
                         u.flags2.slaughter = true
                     end
                 end
-rescue
-    # prevent errors with old dfhack (shearable_tissue / caste_tg)
-end
             }
 
             np.each_key { |id|

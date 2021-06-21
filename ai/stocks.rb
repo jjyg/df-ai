@@ -86,7 +86,7 @@ class DwarfAI
             @last_managerstall ||= df.cur_year_tick / (1200*28)
             if @last_managerstall != df.cur_year_tick / (1200*28)
                 @last_managerstall = df.cur_year_tick / (1200*28)
-                if m = df.world.manager_orders.first and m.is_validated
+                if m = df.world.manager_orders.first and m.status.validated
                     if m.job_type == @last_managerorder 
                         if m.amount_left > 3
                             m.amount_left -= 3
@@ -203,7 +203,7 @@ class DwarfAI
             when :skull
                 # XXX exclude dwarf skulls ?
                 df.world.items.other[:CORPSEPIECE].find_all { |i|
-                    i.corpse_flags.skull and not i.corpse_flags.unbutchered
+                    i.corpse_flags.skull1 and not i.corpse_flags.unbutchered
                 }
             when :bone
                 return df.world.items.other[:CORPSEPIECE].find_all { |i|
@@ -894,7 +894,7 @@ class DwarfAI
 
         def is_raw_coke(i)
             # mat_index => custom reaction name
-            @raw_coke_cache ||= df.world.raws.reactions.inject({}) { |h, r|
+            @raw_coke_cache ||= df.world.raws.reactions.reactions.inject({}) { |h, r|
                 if r.reagents.length == 1 and r.reagents.find { |rr|
                     rr.kind_of?(DFHack::ReactionReagentItemst) and rr.item_type == :BOULDER and rr.mat_type == 0
                 } and r.products.find { |rp|
@@ -942,7 +942,7 @@ class DwarfAI
 
 
             # "make <mi> bars" customreaction
-            df.world.raws.reactions.each { |r|
+            df.world.raws.reactions.reactions.each { |r|
                 # XXX choose best reaction from all reactions
                 prod_mult = nil
                 next unless r.products.find { |rp|

@@ -63,7 +63,7 @@ class DwarfAI
         # automatically unpause the game (only for game-generated pauses)
         if st == :PAUSED and
                 la = df.world.status.announcements.to_a.reverse.find { |a|
-                    df.announcements.flags[a.type].PAUSE rescue nil
+                    df.d_init.announcements.flags[a.type].PAUSE rescue nil
                 } and la.year == df.cur_year and la.time == df.cur_year_tick
             handle_pause_event(la)
 
@@ -159,4 +159,8 @@ class DwarfAI
     def status
         ["Plan: #{plan.status}", "Pop: #{pop.status}", "Stocks: #{stocks.status}"]
     end
+
+	def inspect
+		"#<DwarfAI #{status}>"
+	end
 end
